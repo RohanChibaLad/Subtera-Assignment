@@ -1,7 +1,10 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
+from pathlib import Path
 
-DATABASE_URL = "sqlite:///./library.db"
+BASE_DIR = Path(__file__).resolve().parents[2] # Gets the base directory of the project
+
+DATABASE_URL = "sqlite:///BASE_DIR/database/library.db"
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False}) #Makes sure its SQLite compatible
 
