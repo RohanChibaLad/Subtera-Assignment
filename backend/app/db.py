@@ -2,9 +2,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parents[2] # Gets the base directory of the project
-
-DATABASE_URL = "sqlite:///BASE_DIR/database/library.db"
+BASE_DIR = Path(__file__).resolve().parents[1] # Gets the base directory of the project
+DATABASE_DIR = BASE_DIR / "database" # Directory to store the database file
+DATABASE_DIR.mkdir(parents=True, exist_ok=True) # Create the directory if it doesn't exist
+DATABASE_URL = f"sqlite:///{DATABASE_DIR / 'app.db'}" # SQLite database URL
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False}) #Makes sure its SQLite compatible
 
