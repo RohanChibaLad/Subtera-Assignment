@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from . import models
+from . import models, seed
 from .db import Base, get_db, engine
 from sqlalchemy.orm import Session
 from .routers import debug
@@ -25,5 +25,13 @@ def health_check():
 
 @app.on_event("startup")
 def on_startup():
-    """Create database tables on startup."""
+    """Create database tables on startup and loads seed data"""
+    #Create the tables
     Base.metadata.create_all(bind=engine)
+    
+    #Seed the database
+    db: Session = next(get_db())
+    try:
+        seed.seed_database(db)
+    finally:
+        db.close()
