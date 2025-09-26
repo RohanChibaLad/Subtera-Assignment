@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from . import models, seed
 from .db import Base, get_db, engine
 from sqlalchemy.orm import Session
-from .routers import debug
+from .routers import debug, authors, books, readers
 
 app = FastAPI(title="Subtera Library Assessment API", version="1.0.0")
 
@@ -17,6 +17,9 @@ app.add_middleware(
 )
 
 app.include_router(debug.router)
+app.include_router(authors.router)
+app.include_router(books.router)    
+app.include_router(readers.router)  
 
 @app.get("/health", tags=["Health"])
 def health_check():
