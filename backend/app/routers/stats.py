@@ -1,0 +1,35 @@
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.orm import Session
+from sqlalchemy import func, desc
+from ..db import get_db
+from .. import models, schemas
+
+router = APIRouter(prefix="/stats", tags=["Statistics"])
+
+def get_current_reader(db: Session) -> models.Reader:
+    """Fetch the current reader. For the task, we return the first reader."""
+    
+    return db.query(models.Reader).first()
+
+@router.get("/popular-books", response_model=list[schemas.PopularBookOut])
+def get_popular_books(limit: int = Query(10, description="Number of top popular books to retrieve"), db: Session = Depends(get_db)):
+    """Retrieve the most popular books based on the number of unique readers."""
+    
+    subquery = (db.query(
+                    models.Book.id.label("book_id"),
+                    models.Book.title.label("title"),
+                    models.Book.author_id.label("author_id"),
+                    models.Author.name.label("author_name"),
+                    func.count(func.distinct(models.ReaderBook.reader_id)).label("readers_counter")
+                )
+                .join(models.ReaderBook, models.Book.id == models.ReaderBook.book_id)
+                .join(models.Author, models.Book.author_id == models.Author.id)
+                .group_by(models.Book.id, models.Author.id)
+                .subquery())
+    
+    results = (db.query(subquery)
+               .order_by(desc(subquery.c.readers_counter))
+               .limit(limit)
+               .all())
+    
+    return results
