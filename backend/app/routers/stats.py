@@ -45,11 +45,11 @@ def get_popular_authors(limit: int = Query(10, description="Number of top popula
             db.query(
                     models.Author.id.label("author_id"),
                     models.Author.name.label("author_name"),
-                    func.count(func.distinc(rb.c.reader_id)).label("total_readers")
+                    func.count(func.distinct(rb.c.reader_id)).label("total_readers")
                 )
                 #Table joins for author-reader relationship
                 .join(models.Book, models.Author.id == models.Book.author_id)
-                .join(rb, models.Book.id == rb.c.book_id)
+                .outerjoin(rb, models.Book.id == rb.c.book_id)
                 .group_by(models.Author.id)
                 .order_by(desc("total_readers"), models.Author.name.asc())
                 .limit(limit)
