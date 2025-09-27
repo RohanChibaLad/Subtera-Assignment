@@ -60,3 +60,30 @@ class ReaderOut(ReaderBase):
     
     class Config:
         from_attributes = True #Allows reading data from object attributes
+        
+# --- Statistic Schemas ---
+
+class PopularBookOut(BaseModel):
+    book_id: int
+    title: str
+    author_id: int
+    author_name: str
+    readers_counter: int
+
+class PopularAuthorOut(BaseModel):
+    author_id: int
+    author_name: str
+    total_readers: int
+    books: List[BookOut] = []
+
+class UserTotalBooksOut(BaseModel):
+    reader_id: int
+    reader_name: str
+    total_books: int
+
+class UserTopAuthorsOut(BaseModel):
+    reader_id: int
+    reader_name: str
+    author_id: int
+    author_name: str
+    books_read: int
