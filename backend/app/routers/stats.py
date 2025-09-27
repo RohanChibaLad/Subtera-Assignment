@@ -15,15 +15,18 @@ def get_current_reader(db: Session) -> models.Reader:
 def get_popular_books(limit: int = Query(10, description="Number of top popular books to retrieve"), db: Session = Depends(get_db)):
     """Retrieve the most popular books based on the number of unique readers."""
     
+    rb = models.readers_books
+
+    
     subquery = (
             db.query(
                     models.Book.id.label("book_id"),
                     models.Book.title.label("title"),
                     models.Book.author_id.label("author_id"),
                     models.Author.name.label("author_name"),
-                    func.count(func.distinct(models.ReaderBook.reader_id)).label("readers_counter")
+                    func.count(func.distinct(rb.reader_id)).label("readers_counter")
                 )
-                .join(models.ReaderBook, models.Book.id == models.ReaderBook.book_id)
+                .join(rb, models.Book.id == rb.book_id)
                 .join(models.Author, models.Book.author_id == models.Author.id)
                 .group_by(models.Book.id, models.Author.id)
                 .subquery())
