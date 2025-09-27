@@ -81,3 +81,42 @@ def get_user_total_books(db: Session = Depends(get_db)):
     total = db.query(func.count(rb.c.book_id)).filter(rb.c.reader_id == user.id).scalar()
     
     return [schemas.UserTotalBooksOut(reader_id=user.id, reader_name=user.name, total_books=total)]
+
+
+@router.get("/user-top-authors", response_model=list[schemas.UserTopAuthorsOut])
+def get_user_top_authors(db: Session = Depends(get_db), limit: int = Query(3, ge=1, le=20, description="Number of top authors to retrieve")):
+    """Retrieve the top authors whose books have been read by the current user."""
+    
+    user = get_current_reader(db)
+    if not user:
+        return schemas.UserTooAuthorsOut(reader_id=0, reader_name="", author_id=0, author_name="", books_read=0)
+    
+    rb = models.readers_books
+    
+    subquery = (
+            db.query(
+                    models.Author.id.label("author_id"),
+                    models.Author.name.label("author_name"),
+                    func.count(rb.c.book_id).label("books_read")
+                )
+                .join(models.Book, models.Author.id == models.Book.author_id)
+                .join(rb, models.Book.id == rb.c.book_id)
+                .filter(rb.c.reader_id == user.id)
+                .group_by(models.Author.id)
+                .order_by(desc("books_read"), models.Author.name.asc())
+                .limit(limit)
+        )
+    
+    rows = subquery.all()
+    
+    results: list[schemas.UserTopAuthorsOut] = []
+    for row in rows:
+        results.append(
+            schemas.UserTopAuthorsOut(
+                reader_id=user.id,
+                reader_name=user.name,
+                author_id=row.author_id,
+                author_name=row.author_name,
+                books_read=row.books_read
+            )
+        )
