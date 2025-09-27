@@ -15,7 +15,8 @@ def get_current_reader(db: Session) -> models.Reader:
 def get_popular_books(limit: int = Query(10, description="Number of top popular books to retrieve"), db: Session = Depends(get_db)):
     """Retrieve the most popular books based on the number of unique readers."""
     
-    subquery = (db.query(
+    subquery = (
+            db.query(
                     models.Book.id.label("book_id"),
                     models.Book.title.label("title"),
                     models.Book.author_id.label("author_id"),
@@ -33,3 +34,34 @@ def get_popular_books(limit: int = Query(10, description="Number of top popular 
                .all())
     
     return results
+
+@router.get("/popular-authors", response_model=list[schemas.PopularAuthorOut])
+def get_popular_authors(limit: int = Query(10, description="Number of top popular authors to retrieve"), db: Session = Depends(get_db)):
+    """Retrieve the most popular authors based on the total number of unique readers across all their books."""
+    
+    rb = models.readers_books
+
+    subquery = (
+            db.query(
+                    models.Author.id.label("author_id"),
+                    models.Author.name.label("author_name"),
+                    func.count(func.distinc(rb.c.reader_id)).label("total_readers")
+                )
+                #Table joins for author-reader relationship
+                .join(models.Book, models.Author.id == models.Book.author_id)
+                .join(rb, models.Book.id == rb.c.book_id)
+                .group_by(models.Author.id)
+                .order_by(desc("total_readers"), models.Author.name.asc())
+                .limit(limit)
+    )
+    
+    rows = subquery.all()
+    
+    results: list[schemas.PopularAuthorOut] = []
+    for row in rows:
+        results.append(
+            schemas.PopularAuthorOut.model_validate(row._mapping))
+    
+    return results
+    
+    
