@@ -9,7 +9,7 @@ router = APIRouter(prefix="/stats", tags=["Statistics"])
 def get_current_reader(db: Session) -> models.Reader:
     """Fetch the current reader. For the task, we return the first reader."""
     
-    return db.query(models.Reader).first()
+    return db.query(models.Reader).order_by(models.Reader.id.asc()).first()
 
 @router.get("/popular-books", response_model=list[schemas.PopularBookOut])
 def get_popular_books(limit: int = Query(10, description="Number of top popular books to retrieve"), db: Session = Depends(get_db)):
@@ -24,17 +24,25 @@ def get_popular_books(limit: int = Query(10, description="Number of top popular 
                     models.Book.title.label("title"),
                     models.Book.author_id.label("author_id"),
                     models.Author.name.label("author_name"),
-                    func.count(func.distinct(rb.reader_id)).label("readers_counter")
+                    func.count(func.distinct(rb.c.reader_id)).label("readers_counter")
                 )
-                .join(rb, models.Book.id == rb.book_id)
-                .join(models.Author, models.Book.author_id == models.Author.id)
+                .join(models.Author, models.Book.author_id == models.Author.id)  
+                .outerjoin(rb, rb.c.book_id == models.Book.id)                  
                 .group_by(models.Book.id, models.Author.id)
                 .subquery())
     
-    results = (db.query(subquery)
-               .order_by(desc(subquery.c.readers_counter))
-               .limit(limit)
-               .all())
+    rows = (
+        db.query(subquery)
+        .order_by(desc(subquery.c.readers_counter), subquery.c.title.asc())
+        .limit(limit)
+        .all()
+    )
+    
+    results: list[schemas.PopularBookOut] = []
+    
+    for row in rows:
+        results.append(
+            schemas.PopularBookOut.model_validate(row._mapping))
     
     return results
 
@@ -68,19 +76,20 @@ def get_popular_authors(limit: int = Query(10, description="Number of top popula
     return results
     
     
-@router.get("/user-total-books", response_model=list[schemas.UserTotalBooksOut])
+@router.get("/user-total-books", response_model=schemas.UserTotalBooksOut)
 def get_user_total_books(db: Session = Depends(get_db)):
     """Retrieve the total number of books read by each user."""
     
     user = get_current_reader(db)
     if not user:
-        return schemas.UserTotalBooksOut(reader_id=0,, reader_name="" total_books=0)
+        return schemas.UserTotalBooksOut(reader_id=0, reader_name="" total_books=0)
     
     rb = models.readers_books
     
     total = db.query(func.count(rb.c.book_id)).filter(rb.c.reader_id == user.id).scalar()
     
-    return [schemas.UserTotalBooksOut(reader_id=user.id, reader_name=user.name, total_books=total)]
+    return schemas.UserTotalBooksOut(reader_id=user.id, reader_name=user.name, total_books=total)
+
 
 
 @router.get("/user-top-authors", response_model=list[schemas.UserTopAuthorsOut])
@@ -89,7 +98,7 @@ def get_user_top_authors(db: Session = Depends(get_db), limit: int = Query(3, ge
     
     user = get_current_reader(db)
     if not user:
-        return schemas.UserTooAuthorsOut(reader_id=0, reader_name="", author_id=0, author_name="", books_read=0)
+        return []
     
     rb = models.readers_books
     
@@ -120,3 +129,5 @@ def get_user_top_authors(db: Session = Depends(get_db), limit: int = Query(3, ge
                 books_read=row.books_read
             )
         )
+    
+    return results
