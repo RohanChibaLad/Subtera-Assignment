@@ -68,3 +68,16 @@ def get_popular_authors(limit: int = Query(10, description="Number of top popula
     return results
     
     
+@router.get("/user-total-books", response_model=list[schemas.UserTotalBooksOut])
+def get_user_total_books(db: Session = Depends(get_db)):
+    """Retrieve the total number of books read by each user."""
+    
+    user = get_current_reader(db)
+    if not user:
+        return schemas.UserTotalBooksOut(reader_id=0,, reader_name="" total_books=0)
+    
+    rb = models.readers_books
+    
+    total = db.query(func.count(rb.c.book_id)).filter(rb.c.reader_id == user.id).scalar()
+    
+    return [schemas.UserTotalBooksOut(reader_id=user.id, reader_name=user.name, total_books=total)]
