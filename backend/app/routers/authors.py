@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from .. import models, schemas
 from ..db import get_db
 
@@ -14,9 +15,23 @@ def list_authors(db: Session = Depends(get_db)):
 @router.post("/", response_model=schemas.AuthorOut, status_code=201)
 def create_author(author: schemas.AuthorCreate, db: Session = Depends(get_db)):
     """Create a new author."""
+    name = author.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Author name cannot be empty")
+    
+    existing_author = db.query(models.Author).filter(models.Author.name == name).first()
+    if existing_author:
+        raise HTTPException(status_code=400, detail="Author with this name already exists")
+    
     db_author = models.Author(name=author.name, bio=author.bio)
     db.add(db_author)
-    db.commit()
+    
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Author with this name already exists")
+    
     db.refresh(db_author)
     return db_author
 
