@@ -1,9 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from . import models, seed
 from .db import Base, get_db, engine
 from sqlalchemy.orm import Session
 from .routers import database, authors, books, readers, stats
+
 
 app = FastAPI(title="Subtera Library Assessment API", version="1.0.0")
 
@@ -27,8 +29,8 @@ def health_check():
     """Health check endpoint."""
     return {"status": "ok"}
 
-@app.on_event("startup")
-def on_startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     """Create database tables on startup and loads seed data"""
     #Create the tables
     Base.metadata.create_all(bind=engine)
