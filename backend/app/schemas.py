@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 
 # --- Author Schemas ---
@@ -16,8 +16,7 @@ class AuthorUpdate(AuthorBase):
 class AuthorOut(AuthorBase):
     id: int
     
-    class Config:
-        from_attributes = True #Allows reading data from object attributes
+    model_config = ConfigDict(from_attributes=True)
 
 # --- Book Schemas ---
 
@@ -39,8 +38,8 @@ class BookUpdate(BookBase):
 class BookOut(BookBase):
     id: int    
 
-    class Config:
-        from_attributes = True #Allows reading data from object attributes
+    model_config = ConfigDict(from_attributes=True)
+
 
 # --- Reader Schemas ---
 
@@ -58,8 +57,7 @@ class ReaderUpdate(ReaderBase):
 class ReaderOut(ReaderBase):
     id: int
     
-    class Config:
-        from_attributes = True #Allows reading data from object attributes
+    model_config = ConfigDict(from_attributes=True)
         
 # --- Statistic Schemas ---
 
