@@ -6,8 +6,20 @@ from .db import Base, get_db, engine
 from sqlalchemy.orm import Session
 from .routers import database, authors, books, readers, stats
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Create database tables on startup and loads seed data"""
+    #Create the tables
+    Base.metadata.create_all(bind=engine)
+    
+    #Seed the database
+    db: Session = next(get_db())
+    try:
+        seed.seed_database(db)
+    finally:
+        db.close()
 
-app = FastAPI(title="Subtera Library Assessment API", version="1.0.0")
+app = FastAPI(title="Subtera Library Assessment API", version="1.0.0", lifespan=lifespan)
 
 #React dev server --> Vite default is port 5173
 app.add_middleware(
@@ -28,16 +40,3 @@ app.include_router(stats.router)
 def health_check():
     """Health check endpoint."""
     return {"status": "ok"}
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Create database tables on startup and loads seed data"""
-    #Create the tables
-    Base.metadata.create_all(bind=engine)
-    
-    #Seed the database
-    db: Session = next(get_db())
-    try:
-        seed.seed_database(db)
-    finally:
-        db.close()
