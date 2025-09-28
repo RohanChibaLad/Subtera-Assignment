@@ -19,10 +19,6 @@ def create_author(author: schemas.AuthorCreate, db: Session = Depends(get_db)):
     if not name:
         raise HTTPException(status_code=400, detail="Author name cannot be empty")
     
-    existing_author = db.query(models.Author).filter(models.Author.name == name).first()
-    if existing_author:
-        raise HTTPException(status_code=400, detail="Author with this name already exists")
-    
     db_author = models.Author(name=author.name, bio=author.bio)
     db.add(db_author)
     
@@ -51,11 +47,20 @@ def update_author(author_id: int, author_update: schemas.AuthorUpdate, db: Sessi
         raise HTTPException(status_code=404, detail="Author not found")
     
     if author_update.name is not None:
+        name = author_update.name.strip()
+        if not name:
+            raise HTTPException(status_code=400, detail="Author name cannot be empty")
+    
+    if author_update.name is not None:
         author.name = author_update.name
     if author_update.bio is not None:
         author.bio = author_update.bio
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Author with this name already exists")
     
-    db.commit()
     db.refresh(author)
     return author
 

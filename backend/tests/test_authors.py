@@ -14,9 +14,16 @@ authors.py has 5 direct endpoints:
 Tests:
 1. test_list_authors: This test checks if the /authors endpoint is working correctly by sending a GET request and verifying the response status code and content.
 2. test_create_author: This test checks if a new author can be created by sending a POST request to the /authors endpoint and verifying the response status code and content.
-3. test_get_author: This test checks if an author can be retrieved by ID by sending a GET request to the /authors/{author_id} endpoint and verifying the response status code and content.
-4. test_update_author: This test checks if an existing author can be updated by sending a PUT request to the /authors/{author_id} endpoint and verifying the response status code and content.
-5. test_delete_author: This test checks if an author can be deleted by sending a DELETE request to the /authors/{author_id} endpoint and verifying the response status code.
+3. test_create_author_no_name: This test checks if the API correctly handles the case when an attempt is made to create an author without a name by sending a POST request with an empty name and verifying the response status code and error message.
+4. test_create_author_duplicate_name: This test checks if the API correctly handles the case when
+5. test_get_author: This test checks if an author can be retrieved by ID by sending a GET request to the /authors/{author_id} endpoint and verifying the response status code and content.
+6. test_get_author_not_found: This test checks if the API correctly handles the case when an attempt is made to retrieve a non-existent author by sending a GET request with an invalid ID and verifying the response status code and error message.
+7. test_update_author: This test checks if an existing author can be updated by sending a PUT request to the /authors/{author_id} endpoint and verifying the response status code and content.
+8. test_update_author_not_found: This test checks if the API correctly handles the case when an attempt is made to update a non-existent author by sending a PUT request with an invalid ID and verifying the response status code and error message.
+9. test_update_author_no_name: This test checks if the API correctly handles the case when an attempt is made to update an author without a name by sending a PUT request with an empty name and verifying the response status code and error message.
+10. test_update_author_duplicate_name: This test checks if the API correctly handles the case when
+11. test_delete_author: This test checks if an author can be deleted by sending a DELETE request to the /authors/{author_id} endpoint and verifying the response status code.
+12. test_delete_author_not_found: This test checks if the API correctly handles the case when an attempt is made to delete a non-existent author by sending a DELETE request with an invalid ID and verifying the response status code and error message.
 """
 
 def test_list_authors():
@@ -45,7 +52,27 @@ def test_create_author():
     assert created_author["name"] == new_author["name"]
     assert created_author["bio"] == new_author["bio"]
     assert "id" in created_author
-    
+
+def test_create_author_no_name():
+    new_author = {
+        "name": "",
+        "bio": "This author has no name."
+    }
+    response = client.post("/authors", json=new_author)
+    assert response.status_code == 400
+    error_detail = response.json()
+    assert error_detail["detail"] == "Author name cannot be empty"
+
+def test_create_author_duplicate_name():
+    new_author = {
+        "name": "Test Author",
+        "bio": "This is a duplicate test author."
+    }
+    response = client.post("/authors", json=new_author)
+    assert response.status_code == 400
+    error_detail = response.json()
+    assert error_detail["detail"] == "Author with this name already exists"
+
 def test_get_author():
     # First, create a new author to ensure it exists
     new_author = {
@@ -64,6 +91,12 @@ def test_get_author():
     assert retrieved_author["name"] == new_author["name"]
     assert retrieved_author["bio"] == new_author["bio"]
     assert retrieved_author["id"] == author_id
+
+def test_get_author_not_found():
+    response = client.get("/authors/99999")  # Assuming this ID does not exist
+    assert response.status_code == 404
+    error_detail = response.json()
+    assert error_detail["detail"] == "Author not found"
     
 def test_update_author():
     # First, create a new author to ensure it exists
@@ -88,6 +121,63 @@ def test_update_author():
     assert updated_author_response["bio"] == updated_author["bio"]
     assert updated_author_response["id"] == author_id
 
+def test_update_author_not_found():
+    updated_author = {
+        "name": "Non-existent Author",
+        "bio": "This author does not exist."
+    }
+    response = client.put("/authors/99999", json=updated_author)  # Assuming this ID does not exist
+    assert response.status_code == 404
+    error_detail = response.json()
+    assert error_detail["detail"] == "Author not found"
+
+def test_update_author_no_name():
+    # First, create a new author to ensure it exists
+    new_author = {
+        "name": "Test Author 5",
+        "bio": "This is a test author for no name update."
+    }
+    create_response = client.post("/authors", json=new_author)
+    assert create_response.status_code == 201
+    created_author = create_response.json()
+    author_id = created_author["id"]
+    
+    # Now, attempt to update the author's name to an empty string
+    updated_author = {
+        "name": "",
+        "bio": "This is an updated bio."
+    }
+    update_response = client.put(f"/authors/{author_id}", json=updated_author)
+    assert update_response.status_code == 400
+    error_detail = update_response.json()
+    assert error_detail["detail"] == "Author name cannot be empty"
+
+def test_update_author_duplicate_name():
+    # First, create two authors
+    author1 = {
+        "name": "Unique Author 1",
+        "bio": "First unique author."
+    }
+    author2 = {
+        "name": "Unique Author 2",
+        "bio": "Second unique author."
+    }
+    response1 = client.post("/authors", json=author1)
+    response2 = client.post("/authors", json=author2)
+    assert response1.status_code == 201
+    assert response2.status_code == 201
+    author1_id = response1.json()["id"]
+    
+    # Now, attempt to update author1's name to author2's name
+    updated_author = {
+        "name": "Unique Author 2",
+        "bio": "Trying to duplicate name."
+    }
+    update_response = client.put(f"/authors/{author1_id}", json=updated_author)
+    assert update_response.status_code == 400
+    error_detail = update_response.json()
+    assert error_detail["detail"] == "Author with this name already exists"
+
 def test_delete_author():
     # First, create a new author to ensure it exists
     new_author = {
@@ -107,3 +197,9 @@ def test_delete_author():
     get_response = client.get(f"/authors/{author_id}")
     assert get_response.status_code == 404
     
+
+def test_delete_author_not_found():
+    response = client.delete("/authors/99999")  # Assuming this ID does not exist
+    assert response.status_code == 404
+    error_detail = response.json()
+    assert error_detail["detail"] == "Author not found"
