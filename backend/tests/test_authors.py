@@ -64,6 +64,12 @@ def test_create_author_no_name():
     assert error_detail["detail"] == "Author name cannot be empty"
 
 def test_create_author_duplicate_name():
+    new_author1 = {
+        "name": "Test Author",
+        "bio": "This is a duplicate test author."
+    }
+    response = client.post("/authors", json=new_author1)
+    
     new_author = {
         "name": "Test Author",
         "bio": "This is a duplicate test author."
