@@ -82,7 +82,7 @@ def get_user_total_books(db: Session = Depends(get_db)):
     
     user = get_current_reader(db)
     if not user:
-        return schemas.UserTotalBooksOut(reader_id=0, reader_name="" total_books=0)
+        return schemas.UserTotalBooksOut(reader_id=0, reader_name="", total_books=0)
     
     rb = models.readers_books
     
