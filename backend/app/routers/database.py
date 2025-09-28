@@ -3,7 +3,7 @@ from sqlalchemy import text, inspect
 from sqlalchemy.orm import Session
 from ..db import get_db, engine
 
-router = APIRouter(prefix="/debug", tags=["Debug"])
+router = APIRouter(prefix="/database", tags=["database"])
 
 @router.get("/db-ping", summary="Ping the database to check connectivity")
 def db_ping(db: Session = Depends(get_db)):
