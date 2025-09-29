@@ -12,7 +12,7 @@ def get_current_reader(db: Session) -> models.Reader:
     return db.query(models.Reader).order_by(models.Reader.id.asc()).first()
 
 @router.get("/popular-books", response_model=list[schemas.PopularBookOut])
-def get_popular_books(limit: int = Query(10, description="Number of top popular books to retrieve"), db: Session = Depends(get_db)):
+def get_popular_books(limit: int = Query(5, description="Number of top popular books to retrieve"), db: Session = Depends(get_db)):
     """Retrieve the most popular books based on the number of unique readers."""
     
     rb = models.readers_books
@@ -119,6 +119,7 @@ def get_user_top_authors(db: Session = Depends(get_db), limit: int = Query(3, ge
     rows = subquery.all()
     
     results: list[schemas.UserTopAuthorsOut] = []
+    
     for row in rows:
         results.append(
             schemas.UserTopAuthorsOut(
