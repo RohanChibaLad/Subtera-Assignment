@@ -26,6 +26,13 @@ def list_books(
 @router.post("/", response_model=schemas.BookOut, status_code=status.HTTP_201_CREATED)
 def create_book(book: schemas.BookCreate, db: Session = Depends(get_db)):
     """Create a new book."""
+    title = book.title.strip()
+    if not title:
+        raise HTTPException(status_code=400, detail="Book title cannot be empty")
+
+    if not db.get(models.Author, book.author_id):
+        raise HTTPException(status_code=400, detail="Author with given ID does not exist.")
+    
     db_book = models.Book(
         title=book.title,
         year_published=book.year_published,
@@ -33,6 +40,7 @@ def create_book(book: schemas.BookCreate, db: Session = Depends(get_db)):
         author_id=book.author_id
     )
     db.add(db_book)
+    
     try:
         db.commit()
     except IntegrityError:
@@ -56,6 +64,11 @@ def update_book(book_id: int, book_update: schemas.BookUpdate, db: Session = Dep
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
     
+    title = book_update.title.strip() 
+    if not title:
+        raise HTTPException(status_code=400, detail="Book title cannot be empty")
+    
+    
     if book_update.title is not None:
         book.title = book_update.title
     if book_update.year_published is not None:
@@ -63,6 +76,8 @@ def update_book(book_id: int, book_update: schemas.BookUpdate, db: Session = Dep
     if book_update.description is not None:
         book.description = book_update.description
     if book_update.author_id is not None:
+        if not db.get(models.Author, book_update.author_id):
+            raise HTTPException(status_code=400, detail="Author with given ID does not exist.")
         book.author_id = book_update.author_id
     
     try:

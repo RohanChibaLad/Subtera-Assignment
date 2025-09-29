@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from .. import models, schemas
 from ..db import get_db
 
@@ -14,9 +15,19 @@ def list_authors(db: Session = Depends(get_db)):
 @router.post("/", response_model=schemas.AuthorOut, status_code=201)
 def create_author(author: schemas.AuthorCreate, db: Session = Depends(get_db)):
     """Create a new author."""
+    name = author.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Author name cannot be empty")
+    
     db_author = models.Author(name=author.name, bio=author.bio)
     db.add(db_author)
-    db.commit()
+    
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Author with this name already exists")
+    
     db.refresh(db_author)
     return db_author
 
@@ -36,11 +47,20 @@ def update_author(author_id: int, author_update: schemas.AuthorUpdate, db: Sessi
         raise HTTPException(status_code=404, detail="Author not found")
     
     if author_update.name is not None:
+        name = author_update.name.strip()
+        if not name:
+            raise HTTPException(status_code=400, detail="Author name cannot be empty")
+    
+    if author_update.name is not None:
         author.name = author_update.name
     if author_update.bio is not None:
         author.bio = author_update.bio
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Author with this name already exists")
     
-    db.commit()
     db.refresh(author)
     return author
 
