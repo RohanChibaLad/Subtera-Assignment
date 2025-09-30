@@ -46,8 +46,8 @@ body {
 }
 
 .error {
-    colour: #b91c1c;
-    border-colour: #fecaca;
+    color: #b91c1c;
+    border-color: #fecaca;
     background: #fff1f2;
 }
 
@@ -63,7 +63,7 @@ body {
 }
 
 .muted {
-    colour: #6b7820
+    color: #6b7820
 }
 
 .list {
@@ -82,7 +82,7 @@ body {
 
 .pill {
     background: #111;
-    colour: #fff;
+    color: #fff;
     border-radius: 999px;
     padding: 2px 8px;
     font-size: 12px;
