@@ -48,11 +48,18 @@ export default function Dashboard() {
       setErr(e.message || "Failed to load data")
     }
     finally {
-      if (mounted) {
-        // Finished loading the data
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
         }
       }
-    })
-  })
+    })();
+
+    // Cleanup runs on unmount
+    return () => { mounted = false; };
+  }, []); 
+
+// First item in popularAuthors is the most popular
+  const mostPopularAuthor = popularAuthors[0] || null;
+
+
 }
