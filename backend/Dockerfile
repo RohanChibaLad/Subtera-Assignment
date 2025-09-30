@@ -15,7 +15,7 @@ WORKDIR /app
 # copy code
 COPY . /app
 # SQLite file will live in /database (mounted volume)
-ENV DATABASE_URL=sqlite:////database/app.db
+ENV DATABASE_URL=sqlite:////database_data/app.db
 EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
@@ -23,6 +23,6 @@ CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload
 FROM base AS prod
 WORKDIR /app
 COPY . /app
-ENV DATABASE_URL=sqlite:////database/app.db
+ENV DATABASE_URL=sqlite:////database_data/app.db
 EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

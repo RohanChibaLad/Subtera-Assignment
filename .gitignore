@@ -5,3 +5,6 @@ backend/database/app.db
 frontend/.vite/deps/_metadata.json
 frontend/.vite/deps/package.json
 database/*.db
+node_modules/
+dist/
+.env*
