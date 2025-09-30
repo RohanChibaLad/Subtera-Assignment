@@ -14,24 +14,24 @@ export const del  = (url) => api.delete(url).then(r => r.data);
 // Endpoints (Should only need statistic ones))
 // --- Author --- \\
 export const Authors = {
-  list: () => get("/authors"),
-  create: (body) => post("/authors", body),
+  list: () => get("/author/"),
+  create: (body) => post("/authors/", body),
   update: (id, body) => put(`/authors/${id}`, body),
   remove: (id) => del(`/authors/${id}`),
 };
 
 // --- Book --- \\
 export const Books = {
-  list: (params) => get("/books"),
-  create: (body) => post("/books", body),
+  list: (params) => get("/books/", params),
+  create: (body) => post("/books/", body),
   update: (id, body) => put(`/books/${id}`, body),
   remove: (id) => del(`/books/${id}`),
 };
 
 // --- Readers --- \\
 export const Readers = {
-  list: () => get("/readers"),
-  create: (body) => post("/readers", body),
+  list: () => get("/readers/"),
+  create: (body) => post("/readers/", body),
   update: (id, body) => put(`/readers/${id}`, body),
   remove: (id) => del(`/readers/${id}`),
 };
