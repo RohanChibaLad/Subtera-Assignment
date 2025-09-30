@@ -2,3 +2,9 @@
 __pycache__
 backend/database/app.db
 .DS_Store
+frontend/.vite/deps/_metadata.json
+frontend/.vite/deps/package.json
+database/*.db
+node_modules/
+dist/
+.env*
