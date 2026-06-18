@@ -10,3 +10,4 @@ dist/
 .env*
 backend/venv
 frontend/venv
+backend/app/database.db
